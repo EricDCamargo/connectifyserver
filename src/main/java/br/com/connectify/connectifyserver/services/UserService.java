@@ -1,10 +1,17 @@
 package br.com.connectify.connectifyserver.services;
 
+import br.com.connectify.connectifyserver.dto.UserDetailsDTO;
+import br.com.connectify.connectifyserver.model.Client;
 import br.com.connectify.connectifyserver.model.User;
+import br.com.connectify.connectifyserver.repository.ClientRepository;
 import br.com.connectify.connectifyserver.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -12,37 +19,66 @@ public class UserService {
   @Autowired
   private UserRepository userRepository;
 
-  public User getUserById(int id) {
-    return userRepository.findById(id).orElseThrow(
-        () -> new EntityNotFoundException("Usere não existe"));
+  @Autowired
+  private ClientRepository clientRepository;
+
+  @Autowired
+  private ClientService clientService;
+
+  public UserDetailsDTO getUserById(int userId) {
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado"));
+
+    List<Client> clients = clientService.getClientsByUserId(userId);
+
+    return new UserDetailsDTO(user, clients);
   }
 
+  @Transactional
   public void deleteUserById(int id) {
-    if (this.userRepository.existsById(id)) {
-      this.userRepository.deleteById(id);
-    } else {
-      throw new EntityNotFoundException("Usuario não existe");
+    try {
+      if (userRepository.existsById(id)) {
+        userRepository.deleteById(id);
+        clientRepository.deleteByUserId(id);
+      } else {
+        throw new EntityNotFoundException("Usuário não encontrado");
+      }
+    } catch (EmptyResultDataAccessException e) {
+      // Logue a exceção para análise
+      e.printStackTrace();
+      throw new EntityNotFoundException("Usuário não encontrado");
+    } catch (DataAccessException e) {
+      // Logue a exceção para análise
+      e.printStackTrace();
+      throw new RuntimeException("Erro durante a exclusão do usuário", e);
     }
   }
 
   public User save(User user) {
-    return this.userRepository.save(user);
+    return userRepository.save(user);
   }
 
-  public void update(int id, User user) {
+  @Transactional
+  public User update(int id, User updatedUser) {
+    User existingUser = userRepository.findById(id)
+        .orElseThrow(() -> new EntityNotFoundException("Usuário não encontrado"));
 
-    try {
-      User aux = userRepository.getReferenceById(id);
-      aux.setName(user.getName());
-      aux.setEmail(user.getEmail());
-      aux.setPassword(user.getPassword());
+    updateUserData(existingUser, updatedUser);
 
-      this.userRepository.save(aux);
-    } catch (EntityNotFoundException e) {
-      throw new EntityNotFoundException("Usuario não cadastrado");
-    } catch (Exception e) {
-      throw new EntityNotFoundException("Nao sei qual é o erro!");
+    return userRepository.save(existingUser);
+  }
+
+  private void updateUserData(User existingUser, User updatedUser) {
+    if (updatedUser.getName() != null) {
+      existingUser.setName(updatedUser.getName());
     }
 
+    if (updatedUser.getEmail() != null) {
+      existingUser.setEmail(updatedUser.getEmail());
+    }
+
+    if (updatedUser.getPassword() != null) {
+      existingUser.setPassword(updatedUser.getPassword());
+    }
   }
 }
