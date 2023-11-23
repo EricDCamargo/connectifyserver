@@ -1,12 +1,14 @@
 package br.com.connectify.connectifyserver.controller;
 
 import java.net.URI;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -27,6 +29,12 @@ public class ClientController {
 
   @Autowired
   private ClientService service;
+
+  @GetMapping()
+  public ResponseEntity<List<Client>> getClientsByUser(@RequestParam Integer user_id) {
+    List<Client> clients = service.getClientsByUserId(user_id);
+    return ResponseEntity.ok(clients);
+  }
 
   @DeleteMapping("{id}")
   public ResponseEntity<String> deleteClient(@PathVariable int id) {
