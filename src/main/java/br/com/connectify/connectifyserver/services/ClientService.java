@@ -62,6 +62,9 @@ public class ClientService {
     if (updatedClient.getPhone() != null) {
       existingClient.setPhone(updatedClient.getPhone());
     }
+    if (updatedClient.getAddres() != null) {
+      existingClient.setAddres(updatedClient.getAddres());
+    }
 
     if (updatedClient.getCity() != null) {
       existingClient.setCity(updatedClient.getCity());

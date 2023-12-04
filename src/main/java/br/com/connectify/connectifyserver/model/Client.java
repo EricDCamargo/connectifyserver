@@ -28,6 +28,9 @@ public class Client {
   @NotEmpty(message = "O telefone não pode estar vazio")
   private String phone;
 
+  @NotEmpty(message = "O endereço não pode estar vazio")
+  private String addres;
+
   @NotEmpty(message = "A cidade não pode estar vazio")
   private String city;
 
